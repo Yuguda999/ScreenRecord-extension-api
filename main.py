@@ -5,14 +5,11 @@ from moviepy.editor import VideoFileClip
 
 app = Flask(__name__)
 
-@app.route('/api', methods=['POST'])
+@app.route('/api`', methods=['POST'])
 def upload_video():
-   
-    video_file = request.files['video']
-
     try:
-        # Read the video blob into memory
-        video_blob = io.BytesIO(video_file.read())
+        # Read the video blob from the request
+        video_blob = request.data
 
         # Compress the video blob
         compressed_video_blob = ffmpeg.input('pipe:0').output('pipe:1', vf='scale=640:360').run(input=video_blob, capture_stdout=True, capture_stderr=True, overwrite_output=True)
