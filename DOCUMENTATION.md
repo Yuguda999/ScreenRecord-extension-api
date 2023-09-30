@@ -1,86 +1,91 @@
-# API Documentation
+# Video Processing API Documentation
 
-This document provides an overview and usage guidelines for the API.
+## Table of Contents
 
-## Base URL
+- [Introduction](#introduction)
+  - [Prerequisites](#prerequisites)
+- [API Endpoints](#api-endpoints)
+  - [1. POST /api](#1-post-api)
+- [Usage](#usage)
+- [Error Handling](#error-handling)
+- [Conclusion](#conclusion)
 
-The base URL for all API endpoints is `https://yms.pythonanywhere.com/api`.
+## Introduction
 
-## Endpoints
+The Video Processing API is a Flask-based web service that allows users to upload video blobs, compress them, convert them to a specific resolution, and save them as MP4 files. This documentation provides an overview of the API, its endpoints, and how to use it.
 
-### Upload Video
+### Prerequisites
 
-- **URL:** `https://yms.pythonanywhere.com/api`
-- **Method:** `POST`
-- **Description:** Uploads, compresses, and converts a video blob.
-- **Request Body:**
-  - `video` (BLOB): The video file to be uploaded.
+Before using the API, ensure you have the following dependencies installed:
 
-**Example Request:**
+- Python 3.x
+- Flask
+- FFmpeg
+- MoviePy
 
-```http
-POST http://your-api-domain.com/upload_video
-Content-Type: multipart/form-data
+You can install Flask, FFmpeg, and MoviePy using pip:
 
-(video file as binary data)
+```bash
+pip install Flask moviepy
 ```
 
-**Example Response (Success):**
+## API Endpoints
 
-```json
-HTTP Status: 200 OK
-{
-  "message": "Video uploaded, compressed, converted, and saved successfully"
-}
-```
+### 1. POST https://yms.pythonanywhere.com/api
 
-**Example Response (Error):**
+This endpoint allows users to upload a video blob, which will be processed and saved as an MP4 file.
 
-```json
-HTTP Status: 500 Internal Server Error
-{
-  "error": "Description of the error"
-}
-```
+#### Request
+
+- **Method:** POST
+- **Content-Type:** application/octet-stream (Binary data)
+
+#### Request Body
+
+- The request body should contain the video blob as raw binary data.
+
+#### Response
+
+- If successful, the API responds with a JSON message indicating that the video was uploaded, compressed, converted, and saved successfully.
+  ```json
+  {
+    "message": "Video uploaded, compressed, converted, and saved successfully"
+  }
+  ```
+- If there is an error during processing, the API responds with an error message.
+  ```json
+  {
+    "error": "Error details here"
+  }
+  ```
+
+## Usage
+
+To use the Video Processing API, follow these steps:
+
+1. Start the Flask server by running the provided Python script:
+
+   ```bash
+   python your_api_script.py
+   ```
+
+2. Send a POST request to the `/api` endpoint with the video blob as the request body.
+
+   Example using Python requests library:
+
+   ```python
+   import requests
+
+   video_blob = open('your_video.mp4', 'rb').read()  # Replace 'your_video.mp4' with the actual video file
+   response = requests.post('http://localhost:5000/api/upload_video', data=video_blob)
+
+   if response.status_code == 200:
+       print("Video processing successful!")
+   else:
+       print("Error:", response.json()['error'])
+   ```
 
 ## Error Handling
 
-- The API may return HTTP status codes along with error messages in JSON format.
-- Common status codes include:
-  - `200 OK`: Successful request.
-  - `400 Bad Request`: Invalid request data or missing parameters.
-  - `500 Internal Server Error`: Server encountered an issue while processing the request.
-
-## Usage Guidelines
-
-- Make sure to send a POST request with a `video` file in the request body to `/upload_video`.
-- The API will handle video compression and conversion.
-- Check the response for success or error messages.
-
-## Dependencies
-
-- This API relies on the following dependencies:
-  - Flask: Web framework for handling HTTP requests.
-  - ffmpeg: Multimedia framework for video manipulation.
-  - moviepy: Library for video editing.
-
-## Running the API
-
-To run the API, execute the following command in your terminal:
-
-```bash
-python your_api_script.py
-```
-
-Ensure that you have the required dependencies installed and configured.
-
-## Support and Contact
-
-For any questions or issues related to this API, please contact [your contact information].
-
----
-
-This is a basic template for API documentation. You should tailor it to your specific API's features, parameters, and requirements. Additionally, consider adding sections for authentication, rate limiting, and more advanced features as needed.
-```
-
-Replace placeholders such as `http://your-api-domain.com`, `your_api_script.py`, and `[your contact information]` with the actual details of your API. You can also expand this documentation to cover more advanced features and usage examples.
+- If the video blob is not provided or is invalid, the API responds with a 500 Internal Server Error.
+- If FFmpeg encounters an error during video processing, the API captures the stderr output and provides a detailed error message in the response.
