@@ -1,36 +1,64 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 import base64
 import os
+import uuid
 
 app = Flask(__name__)
 
-@app.route('/api', methods=['POST'])
+# Dictionary to store video data
+video_data = {}
+
+@app.route('/upload', methods=['POST'])
 def upload_video():
     try:
-        data = request.json  # Assuming you are sending the Base64 string as JSON
-        base64_string = data['video_base64']  # Assuming the JSON key is 'video_base64'
+        data = request.json 
+        base64_string = data['video_base64'] 
 
         # Decode the Base64 string to binary data
         video_binary = base64.b64decode(base64_string)
 
-        # Define the path to save the video locally
-        save_path = 'saved_videos/'
+        # Generate a unique ID for the video
+        video_id = str(uuid.uuid4())
+
+        # Specify a directory to temporarily save the video
+        save_path = 'temp_videos/'
 
         # Ensure the directory exists
         if not os.path.exists(save_path):
             os.makedirs(save_path)
 
-        # Generate a unique filename (you can customize this)
-        filename = 'video.mp4'  # You may want to change the file extension based on the actual video format
+        # Generate a unique filename based on the video ID
+        filename = f'screenrecord-{video_id}.mp4'
 
-        # Save the video to the specified path
+        # Save the video to the temporary path
         with open(os.path.join(save_path, filename), 'wb') as file:
             file.write(video_binary)
 
-        return jsonify({'message': 'Video saved successfully'})
+        # Store the video ID and file path in the dictionary
+        video_data[video_id] = os.path.join(save_path, filename)
+
+        # Return the video ID as a response
+        return jsonify({'video_id': video_id})
+
     except Exception as e:
         return jsonify({'error': str(e)})
-    
-    
-if __name__ == '__main__':
-    app.run(debug=True)
+
+@app.route('/get_video/<video_id>', methods=['GET'])
+def get_video(video_id):
+    try:
+        # Retrieve the file path associated with the video ID
+        video_path = video_data.get(video_id)
+
+        if video_path:
+            # Send the video file as a download response
+            return send_file(
+                video_path,
+                as_attachment=True,
+                download_name='video.mp4',
+                mimetype='video/mp4'
+            )
+        else:
+            return jsonify({'error': 'Video not found'})
+
+    except Exception as e:
+        return jsonify({'error': str(e)})
