@@ -1,35 +1,36 @@
 from flask import Flask, request, jsonify
-import io
-import ffmpeg
-from moviepy.editor import VideoFileClip
+import base64
+import os
 
 app = Flask(__name__)
 
 @app.route('/api', methods=['POST'])
 def upload_video():
-   
-    video_file = request.files['video']
-
     try:
-        # Read the video blob into memory
-        video_blob = io.BytesIO(video_file.read())
+        data = request.json  # Assuming you are sending the Base64 string as JSON
+        base64_string = data['video_base64']  # Assuming the JSON key is 'video_base64'
 
-        # Compress the video blob
-        compressed_video_blob = ffmpeg.input('pipe:0').output('pipe:1', vf='scale=640:360').run(input=video_blob, capture_stdout=True, capture_stderr=True, overwrite_output=True)
+        # Decode the Base64 string to binary data
+        video_binary = base64.b64decode(base64_string)
 
-        # Convert the compressed video blob to the original video format
-        original_video = VideoFileClip(io.BytesIO(compressed_video_blob))
+        # Define the path to save the video locally
+        save_path = 'saved_videos/'
 
-        # Save the original video to disk
-        original_filename = 'original_video.mp4'
-        original_video.write_videofile(original_filename)
+        # Ensure the directory exists
+        if not os.path.exists(save_path):
+            os.makedirs(save_path)
 
-        # Close video objects
-        original_video.close()
+        # Generate a unique filename (you can customize this)
+        filename = 'video.mp4'  # You may want to change the file extension based on the actual video format
 
-        return jsonify({'message': 'Video saved successfully'}), 200
+        # Save the video to the specified path
+        with open(os.path.join(save_path, filename), 'wb') as file:
+            file.write(video_binary)
+
+        return jsonify({'message': 'Video saved successfully'})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
+        return jsonify({'error': str(e)})
+    
+    
 if __name__ == '__main__':
     app.run(debug=True)
