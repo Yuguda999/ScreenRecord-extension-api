@@ -1,91 +1,74 @@
-# Video Processing API Documentation
+# Screen Record Extension API Documentation
+
+Welcome to the Video Upload API documentation. This API allows you to upload and retrieve videos using a unique identifier.
 
 ## Table of Contents
 
-- [Introduction](#introduction)
-  - [Prerequisites](#prerequisites)
-- [API Endpoints](#api-endpoints)
-  - [1. POST /api](#1-post-api)
-- [Usage](#usage)
-- [Error Handling](#error-handling)
-- [Conclusion](#conclusion)
+1. [Introduction](#introduction)
+2. [Endpoints](#endpoints)
+    - [Upload Video](#upload-video)
+    - [Get Video](#get-video)
+3. [Authentication](#authentication)
+4. [HTTP Status Codes](#http-status-codes)
+5. [Error Handling](#error-handling)
 
 ## Introduction
 
-The Video Processing API is a Flask-based web service that allows users to upload video blobs, compress them, convert them to a specific resolution, and save them as MP4 files. This documentation provides an overview of the API, its endpoints, and how to use it.
+The Video Upload API provides a simple way to upload and retrieve videos. You can upload a video and receive a unique identifier (video ID) in response. Later, you can use this ID to retrieve the uploaded video.
 
-### Prerequisites
+## Endpoints
 
-Before using the API, ensure you have the following dependencies installed:
+### Upload Video
 
-- Python 3.x
-- Flask
-- FFmpeg
-- MoviePy
+- **Endpoint**: `/upload`
+- **Method**: POST
+- **Description**: Upload a video file encoded as a Base64 string and receive a unique video ID.
+- **Request Body**:
+    ```json
+    {
+        "video_base64": "Base64-encoded video data"
+    }
+    ```
+- **Response**:
+    ```json
+    {
+        "video_id": "unique_video_id"
+    }
+    ```
+- **Example Request**:
+    ```bash
+    curl -X POST -H "Content-Type: application/json" -d '{"video_base64": "YourBase64DataHere"}' http://yourserver/upload
+    ```
+- **Example Response**:
+    ```json
+    {
+        "video_id": "a6f1d21e-4dd9-4f4f-afbb-5d9e64c3d8a1"
+    }
+    ```
 
-You can install Flask, FFmpeg, and MoviePy using pip:
+### Get Video
 
-```bash
-pip install Flask moviepy
-```
+- **Endpoint**: `/get_video/<video_id>`
+- **Method**: GET
+- **Description**: Retrieve the video associated with the given video ID.
+- **Response**: Video file (prompting for download)
+- **Example Request**:
+    ```bash
+    curl -OJ http://yourserver/get_video/a6f1d21e-4dd9-4f4f-afbb-5d9e64c3d8a1
+    ```
+- **Note**: Replace `<video_id>` with the actual video ID received after uploading.
 
-## API Endpoints
+## Authentication
 
-### 1. POST https://yms.pythonanywhere.com/api
+This API does not require authentication for uploading and retrieving videos.
 
-This endpoint allows users to upload a video blob, which will be processed and saved as an MP4 file.
+## HTTP Status Codes
 
-#### Request
-
-- **Method:** POST
-- **Content-Type:** application/octet-stream (Binary data)
-
-#### Request Body
-
-- The request body should contain the video blob as raw binary data.
-
-#### Response
-
-- If successful, the API responds with a JSON message indicating that the video was uploaded, compressed, converted, and saved successfully.
-  ```json
-  {
-    "message": "Video uploaded, compressed, converted, and saved successfully"
-  }
-  ```
-- If there is an error during processing, the API responds with an error message.
-  ```json
-  {
-    "error": "Error details here"
-  }
-  ```
-
-## Usage
-
-To use the Video Processing API, follow these steps:
-
-1. Start the Flask server by running the provided Python script:
-
-   ```bash
-   python your_api_script.py
-   ```
-
-2. Send a POST request to the `/api` endpoint with the video blob as the request body.
-
-   Example using Python requests library:
-
-   ```python
-   import requests
-
-   video_blob = open('your_video.mp4', 'rb').read()  # Replace 'your_video.mp4' with the actual video file
-   response = requests.post('http://localhost:5000/api/upload_video', data=video_blob)
-
-   if response.status_code == 200:
-       print("Video processing successful!")
-   else:
-       print("Error:", response.json()['error'])
-   ```
+- `200 OK`: Request successful.
+- `400 Bad Request`: Invalid request or missing data.
+- `404 Not Found`: The requested video ID does not exist.
+- `500 Internal Server Error`: Server error.
 
 ## Error Handling
 
-- If the video blob is not provided or is invalid, the API responds with a 500 Internal Server Error.
-- If FFmpeg encounters an error during video processing, the API captures the stderr output and provides a detailed error message in the response.
+In case of errors, the API will return a JSON response with an "error" key containing an error message.
